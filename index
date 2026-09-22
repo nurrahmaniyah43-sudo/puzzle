@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas & Simulasi Pos Game: Build the Website</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        code: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        tuban: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#035485',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-tuban-500 selection:text-white">
+
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-tuban-500 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-tuban-500/30">
+                    🧩
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white leading-tight">Pos Game Canvas: Build the Website</h1>
+                    <p class="text-xs text-slate-400">12 Pola Kunci Kelompok, Visual Dinamis & Kunci Jawaban Lengkap</p>
+                </div>
+            </div>
+
+            <!-- View Switcher Tabs -->
+            <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-700 text-xs sm:text-sm font-medium">
+                <button id="btn-tab-sim" onclick="switchTab('simulation')" class="px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 bg-tuban-500 text-white shadow-sm">
+                    <i class="fa-solid fa-gamepad"></i> Simulasi Pos
+                </button>
+                <button id="btn-tab-key" onclick="openAdminAuthModal()" class="px-3.5 py-2 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-lock text-amber-400"></i> Kunci Jawaban (Admin)
+                </button>
+                <button id="btn-tab-print" onclick="switchTab('printables')" class="px-3.5 py-2 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-print"></i> Blueprint Cetak
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative space-y-4">
+            <button onclick="closeAdminModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto text-xl">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Akses Kunci Jawaban Admin</h3>
+                <p class="text-xs text-slate-400">Masukkan PIN Pembimbing Pos untuk membuka matriks 12 kunci jawaban kelompok.</p>
+            </div>
+            
+            <div class="space-y-3">
+                <input type="password" id="admin-pin-input" maxlength="6" placeholder="Masukkan PIN Akses" class="w-full bg-slate-900 border border-slate-700 text-center font-code text-xl text-amber-400 tracking-widest rounded-xl py-3 focus:outline-none focus:border-amber-400" onkeyup="if(event.key === 'Enter') submitAdminPin()">
+                <div id="admin-pin-error" class="text-xs text-rose-400 text-center hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i> PIN Salah! Akses ditolak.
+                </div>
+                <button onclick="submitAdminPin()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl transition shadow-lg shadow-amber-500/20">
+                    Buka Kunci Jawaban
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Notification Modal -->
+    <div id="game-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4 text-center">
+            <div id="game-modal-icon" class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto text-2xl"></div>
+            <h3 id="game-modal-title" class="text-xl font-bold text-white"></h3>
+            <p id="game-modal-body" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p>
+            <button onclick="closeGameModal()" class="w-full py-2.5 bg-tuban-500 hover:bg-tuban-600 text-white font-bold text-xs rounded-xl transition">
+                Tutup / Lanjutkan
+            </button>
+        </div>
+    </div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: SIMULASI INTERAKTIF -->
+        <div id="tab-simulation" class="space-y-6">
+            
+            <!-- Context & Group Selector Banner -->
+            <div class="bg-gradient-to-r from-tuban-900/90 via-slate-800 to-slate-800 border border-tuban-500/40 rounded-2xl p-4 sm:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shadow-xl">
+                <div class="flex items-start gap-4">
+                    <div class="p-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-400 text-2xl shrink-0 mt-1">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">SIMULASI 12 KELOMPOK</span>
+                            <span id="group-badge-active" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-code">Kelompok 1 (Pantai Boom)</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-white" id="group-theme-title">Website Wisata Tuban Error!</h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-0.5" id="group-theme-desc">
+                            Pasangkan kartu Tag HTML dan Gaya CSS ke dalam slot. Setiap kelompok memiliki pola kode dan visual destinasi yang unik!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Group Selector Controls -->
+                <div class="flex flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-700">
+                    <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-700 px-3 py-1.5 rounded-xl text-xs">
+                        <label for="group-select" class="text-slate-400 font-semibold shrink-0">Pilih Kelompok:</label>
+                        <select id="group-select" onchange="changeGroup(this.value)" class="bg-slate-800 text-amber-300 font-bold border border-slate-600 rounded-lg px-2 py-1 focus:outline-none focus:border-amber-400 cursor-pointer">
+                            <option value="1">Kelompok 1 - Pantai Boom</option>
+                            <option value="2">Kelompok 2 - Goa Akbar</option>
+                            <option value="3">Kelompok 3 - Air Terjun Nglirip</option>
+                            <option value="4">Kelompok 4 - Makam Sunan Bonang</option>
+                            <option value="5">Kelompok 5 - Kelenteng Kwan Sing Bio</option>
+                            <option value="6">Kelompok 6 - Pantai Kelapa</option>
+                            <option value="7">Kelompok 7 - Tebing Kapur Rengel</option>
+                            <option value="8">Kelompok 8 - Pemandian Bektiharjo</option>
+                            <option value="9">Kelompok 9 - Goa Suci Palang</option>
+                            <option value="10">Kelompok 10 - Pantai Sowan</option>
+                            <option value="11">Kelompok 11 - Museum Kambang Putih</option>
+                            <option value="12">Kelompok 12 - Air Terjun Keningar</option>
+                        </select>
+                    </div>
+
+                    <button onclick="resetSimulation()" class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold transition border border-slate-600 flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-right"></i> Reset Slot
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Left Column: Guidance & Card Deck (4 Cols) -->
+                <div class="lg:col-span-4 space-y-6">
+                    
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group text-tuban-500"></i> Deck Kartu Puzzle Fisik
+                            </h3>
+                            <span class="text-[10px] bg-tuban-500/20 text-tuban-300 border border-tuban-500/30 px-2 py-0.5 rounded-full font-semibold" id="card-count-badge">Klik Kartu Untuk Memilih</span>
+                        </div>
+                        <p class="text-xs text-slate-400">Klik kartu di bawah ini, lalu klik tombol <strong>"Pasang Kartu"</strong> pada slot papan landasan. Awas kartu pengecoh!</p>
+
+                        <!-- HTML Cards Section -->
+                        <div>
+                            <span class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-2">1. Kartu Tag HTML (Wadah + Isi)</span>
+                            <div class="grid grid-cols-1 gap-2" id="deck-html">
+                                <!-- JS Generated -->
+                            </div>
+                        </div>
+
+                        <!-- CSS Cards Section -->
+                        <div>
+                            <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-2">2. Kartu Gaya CSS (Tampilan)</span>
+                            <div class="grid grid-cols-1 gap-2" id="deck-css">
+                                <!-- JS Generated -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Middle Column: Layout Board (5 Cols) -->
+                <div class="lg:col-span-5 bg-slate-800/90 border border-slate-700 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-700">
+                            <div>
+                                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                                    <i class="fa-solid fa-clipboard-list text-amber-400"></i> Papan Landasan Layout
+                                </h3>
+                                <p class="text-xs text-slate-400">Urutkan dari atas ke bawah sesuai struktur web</p>
+                            </div>
+                            <button onclick="autoFillCorrect()" class="text-xs text-tuban-400 hover:text-tuban-300 underline font-medium flex items-center gap-1">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Fill Jawaban
+                            </button>
+                        </div>
+
+                        <!-- Layout Slots Container -->
+                        <div class="space-y-3" id="slots-container">
+                            <!-- Slots generated via JS -->
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-slate-700">
+                        <div class="bg-slate-900 border border-amber-500/30 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                            <span class="text-xs text-amber-400 uppercase tracking-widest font-bold mb-1">🔐 KODE RAHASIA SERVER KELOMPOK</span>
+                            <div class="flex items-center gap-3 my-2" id="secret-code-display">
+                                <div class="w-10 h-12 bg-slate-800 border border-slate-600 rounded-lg flex items-center justify-center text-xl font-bold font-code text-slate-500">?</div>
+                                <div class="w-10 h-12 bg-slate-800 border border-slate-600 rounded-lg flex items-center justify-center text-xl font-bold font-code text-slate-500">?</div>
+                                <div class="w-10 h-12 bg-slate-800 border border-slate-600 rounded-lg flex items-center justify-center text-xl font-bold font-code text-slate-500">?</div>
+                                <div class="w-10 h-12 bg-slate-800 border border-slate-600 rounded-lg flex items-center justify-center text-xl font-bold font-code text-slate-500">?</div>
+                            </div>
+                            <p class="text-xs text-slate-400" id="code-hint-status">Susun kartu HTML dengan benar untuk membuka angka di balik kartu!</p>
+                            <button id="btn-verify" onclick="checkSolution()" class="mt-3 w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-key"></i> Verifikasi Kode ke Penjaga Pos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Web Preview (3 Cols) -->
+                <div class="lg:col-span-3 space-y-6">
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-desktop text-emerald-400"></i> Live Web Preview
+                            </h3>
+                            <span id="preview-status" class="inline-flex items-center gap-1.5 text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-semibold">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span> Offline
+                            </span>
+                        </div>
+                        
+                        <!-- Simulated Browser Window -->
+                        <div class="bg-white text-slate-800 rounded-xl overflow-hidden border border-slate-300 shadow-2xl min-h-[420px] flex flex-col">
+                            <!-- Browser Bar -->
+                            <div class="bg-slate-200 border-b border-slate-300 px-3 py-1.5 flex items-center gap-2">
+                                <div class="flex gap-1">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-rose-400"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                                </div>
+                                <div class="bg-white text-[10px] text-slate-500 font-code px-2 py-0.5 rounded flex-1 truncate" id="browser-url">
+                                    https://wisata.tubankab.go.id/pantaiboom
+                                </div>
+                            </div>
+
+                            <!-- Live Browser Canvas Area -->
+                            <div id="live-canvas" class="p-4 flex-1 flex flex-col space-y-3 font-sans transition-all duration-300 justify-center">
+                                <div id="live-body-status" class="border-2 border-dashed border-slate-300 rounded p-4 flex-1 flex flex-col items-center justify-center text-center">
+                                    <i class="fa-solid fa-globe text-slate-300 text-3xl mb-2"></i>
+                                    <p class="text-[11px] text-slate-400 italic">
+                                        [ Halaman Web Masih Kosong ]<br>Pasang Tag Pembuka & Penutup Body di Slot 1 & 10 untuk mulai merender.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Explanatory Helper Box -->
+                    <div class="bg-tuban-900/40 border border-tuban-500/30 rounded-2xl p-4 shadow-lg text-xs space-y-2">
+                        <h4 class="font-bold text-tuban-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-info"></i> Info Pola Pos Game:
+                        </h4>
+                        <p class="text-slate-300 leading-relaxed">
+                            • Terdapat <strong>12 Pola Kelompok</strong> unik dengan destinasi khas Tuban.<br>
+                            • Angka rahasia tercetak di balik kartu HTML utama: <code>&lt;h1&gt;</code>, <code>&lt;img&gt;</code>, <code>&lt;p&gt;</code>, dan <code>&lt;a&gt;</code>.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 2: KUNCI JAWABAN (ADMIN) -->
+        <div id="tab-answerkey" class="hidden space-y-8">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-5xl mx-auto space-y-3 text-center">
+                <span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs px-3 py-1 rounded-full font-semibold">MATRIKS KUNCI JAWABAN PEMBIMBING POS</span>
+                <h2 class="text-2xl font-extrabold text-white">💡 Kunci Jawaban Lengkap (12 Kelompok)</h2>
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-3xl mx-auto">
+                    Tabel matriks di bawah ini memuat seluruh kode rahasia 4-digit beserta destinasi wisata visual untuk ke-12 kelompok peserta.
+                </p>
+            </div>
+
+            <!-- 12 Group Master Matrix Table -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-5xl mx-auto shadow-2xl overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-200">
+                    <thead class="bg-slate-900 text-amber-400 font-bold border-b border-slate-700 uppercase tracking-wider">
+                        <tr>
+                            <th class="p-3">Kelompok</th>
+                            <th class="p-3">Destinasi Wisata</th>
+                            <th class="p-3">Pola Kode (4-Digit)</th>
+                            <th class="p-3">Elemen HTML Utama (H1, IMG, P, A)</th>
+                            <th class="p-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700 font-sans" id="matrix-table-body">
+                        <!-- JS Generated Matrix -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-slate-800 border-2 border-amber-500/40 rounded-2xl p-6 max-w-5xl mx-auto shadow-2xl space-y-6" id="dynamic-answer-key-content">
+                <!-- JS Generated Detailed Single Group View -->
+            </div>
+        </div>
+
+        <!-- TAB 3: BLUEPRINT CETAK -->
+        <div id="tab-printables" class="hidden space-y-8">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 text-center max-w-3xl mx-auto space-y-2">
+                <span class="bg-tuban-500/20 text-tuban-300 border border-tuban-500/30 text-xs px-3 py-1 rounded-full font-semibold">LEMBAR CETAK FISIK POS</span>
+                <h2 class="text-2xl font-bold text-white">Desain Fisik Siap Cetak (Printable Blueprint)</h2>
+                <p class="text-xs sm:text-sm text-slate-300">Gunakan tata letak berikut untuk mencetak Papan Landasan (Ukuran A3/A4) dan Lembar Kartu Puzzle.</p>
+            </div>
+
+            <!-- Printable Board Blueprint -->
+            <div class="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 max-w-4xl mx-auto shadow-2xl border-4 border-slate-300">
+                <div class="border-2 border-slate-900 p-6 space-y-6">
+                    <div class="text-center border-b-2 border-slate-900 pb-4">
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-500">PAPAN LANDASAN LAYOUT (PRINTABLE A3 / A4)</span>
+                        <h1 class="text-2xl font-extrabold text-slate-900 uppercase tracking-tight">BUILD THE WEBSITE — WISATA TUBAN</h1>
+                    </div>
+
+                    <div class="space-y-3 font-code text-xs">
+                        <div class="border-2 border-dashed border-slate-400 p-2.5 bg-slate-50 text-center font-bold text-slate-600">
+                            [ SLOT 1: Tag Pembuka Utama Website ]
+                        </div>
+                        <div class="border-2 border-slate-800 p-3 space-y-2">
+                            <div class="border-2 border-dashed border-cyan-600 p-2 bg-cyan-50 font-bold text-cyan-800 text-center">
+                                [ SLOT 2: Elemen Judul Utama Wisata ]
+                            </div>
+                            <div class="border-2 border-dashed border-emerald-600 p-2 bg-emerald-50 font-bold text-emerald-800 text-center">
+                                [ SLOT 3: Gaya CSS Judul Utama ]
+                            </div>
+                        </div>
+                        <div class="border-2 border-slate-800 p-3 space-y-2">
+                            <div class="border-2 border-dashed border-cyan-600 p-2 bg-cyan-50 font-bold text-cyan-800 text-center">
+                                [ SLOT 4: Elemen Foto / Gambar Wisata ]
+                            </div>
+                            <div class="border-2 border-dashed border-emerald-600 p-2 bg-emerald-50 font-bold text-emerald-800 text-center">
+                                [ SLOT 5: Gaya CSS Gambar Wisata ]
+                            </div>
+                        </div>
+                        <div class="border-2 border-slate-800 p-3 space-y-2">
+                            <div class="border-2 border-dashed border-cyan-600 p-2 bg-cyan-50 font-bold text-cyan-800 text-center">
+                                [ SLOT 6: Elemen Teks Deskripsi Wisata ]
+                            </div>
+                            <div class="border-2 border-dashed border-emerald-600 p-2 bg-emerald-50 font-bold text-emerald-800 text-center">
+                                [ SLOT 7: Gaya CSS Teks Deskripsi ]
+                            </div>
+                        </div>
+                        <div class="border-2 border-slate-800 p-3 space-y-2">
+                            <div class="border-2 border-dashed border-cyan-600 p-2 bg-cyan-50 font-bold text-cyan-800 text-center">
+                                [ SLOT 8: Elemen Tombol Tautan Aksi ]
+                            </div>
+                            <div class="border-2 border-dashed border-emerald-600 p-2 bg-emerald-50 font-bold text-emerald-800 text-center">
+                                [ SLOT 9: Gaya CSS Tombol Tautan ]
+                            </div>
+                        </div>
+                        <div class="border-2 border-dashed border-slate-400 p-2.5 bg-slate-50 text-center font-bold text-slate-600">
+                            [ SLOT 10: Tag Penutup Utama Website ]
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-slate-800 border-t border-slate-700 py-4 text-center text-xs text-slate-400">
+        Pos Interactive Game — Modul Wisata Tuban Website Builder • Media Edukasi Berbasis Game
+    </footer>
+
+    <script>
+        // 12 PREDEFINED GROUP PATTERNS (12 Kelompok dengan Kode & Visual Destinasi Unik)
+        const GROUPS_DATA = [
+            {
+                id: 1,
+                name: "Kelompok 1",
+                destName: "Pantai Boom Tuban",
+                code: ["1", "4", "8", "2"],
+                h1: "Wisata Pantai Boom",
+                imgTag: "<img> Foto Pantai Boom </img>",
+                imgUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=500&q=80",
+                pText: "Pesona pantai bersejarah di pusat kota Tuban dengan semenanjung indah.",
+                aText: "Jelajahi Pantai Boom",
+                urlPath: "https://wisata.tubankab.go.id/pantaiboom"
+            },
+            {
+                id: 2,
+                name: "Kelompok 2",
+                destName: "Goa Akbar Tuban",
+                code: ["2", "7", "3", "9"],
+                h1: "Eksotisme Goa Akbar",
+                imgTag: "<img> Foto Stalaktit Goa Akbar </img>",
+                imgUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80",
+                pText: "Keindahan stalaktit dan stalagmit alami di bawah lorong goa bersejarah.",
+                aText: "Masuk Kebawah Goa",
+                urlPath: "https://wisata.tubankab.go.id/goaakbar"
+            },
+            {
+                id: 3,
+                name: "Kelompok 3",
+                destName: "Air Terjun Nglirip",
+                code: ["3", "9", "5", "1"],
+                h1: "Pesona Air Terjun Nglirip",
+                imgTag: "<img> Foto Air Terjun Nglirip </img>",
+                imgUrl: "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=500&q=80",
+                pText: "Keindahan air terjun berwarna hijau toska yang menawan di Tuban.",
+                aText: "Lihat Gemericik Air",
+                urlPath: "https://wisata.tubankab.go.id/nglirip"
+            },
+            {
+                id: 4,
+                name: "Kelompok 4",
+                destName: "Makam Sunan Bonang",
+                code: ["4", "1", "6", "8"],
+                h1: "Wisata Religi Sunan Bonang",
+                imgTag: "<img> Foto Gerbang Sunan Bonang </img>",
+                imgUrl: "https://images.unsplash.com/photo-1548625361-1850117a7837?auto=format&fit=crop&w=500&q=80",
+                pText: "Destinasi ziarah religi dan sejarah penyebaran Islam Wali Songo.",
+                aText: "Ziarah Ke Bonang",
+                urlPath: "https://wisata.tubankab.go.id/sunanbonang"
+            },
+            {
+                id: 5,
+                name: "Kelompok 5",
+                destName: "Kelenteng Kwan Sing Bio",
+                code: ["5", "8", "2", "4"],
+                h1: "Kelenteng Kwan Sing Bio",
+                imgTag: "<img> Foto Kelenteng Kwan Sing Bio </img>",
+                imgUrl: "https://images.unsplash.com/photo-1513415564515-763d91423bdd?auto=format&fit=crop&w=500&q=80",
+                pText: "Kelenteng megah pinggir laut dengan simbol kepiting raksasa yang khas.",
+                aText: "Kunjungi Kelenteng",
+                urlPath: "https://wisata.tubankab.go.id/kwansingbio"
+            },
+            {
+                id: 6,
+                name: "Kelompok 6",
+                destName: "Pantai Kelapa Tuban",
+                code: ["6", "3", "9", "2"],
+                h1: "Keindahan Pantai Kelapa",
+                imgTag: "<img> Foto Hutan Pohon Kelapa </img>",
+                imgUrl: "https://images.unsplash.com/photo-1509233725247-49e657c54213?auto=format&fit=crop&w=500&q=80",
+                pText: "Ribuan pohon kelapa rimbun di tepi pantai pasir putih yang sejuk.",
+                aText: "Bersantai di Pantai",
+                urlPath: "https://wisata.tubankab.go.id/pantaikelapa"
+            },
+            {
+                id: 7,
+                name: "Kelompok 7",
+                destName: "Tebing Kapur Rengel",
+                code: ["7", "2", "4", "1"],
+                h1: "Bukit & Tebing Kapur Rengel",
+                imgTag: "<img> Foto Tebing Kapur Rengel </img>",
+                imgUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=500&q=80",
+                pText: "Pemandangan tebing kapur megah bernuansa alam unik nan fotogenik.",
+                aText: "Daftar Spot Foto",
+                urlPath: "https://wisata.tubankab.go.id/tebingrengel"
+            },
+            {
+                id: 8,
+                name: "Kelompok 8",
+                destName: "Pemandian Bektiharjo",
+                code: ["8", "5", "1", "7"],
+                h1: "Mata Air Bektiharjo",
+                imgTag: "<img> Foto Sendang Bektiharjo </img>",
+                imgUrl: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80",
+                pText: "Kolam mata air alami yang jernih dan segar sejak zaman dahulu.",
+                aText: "Berenang di Sendang",
+                urlPath: "https://wisata.tubankab.go.id/bektiharjo"
+            },
+            {
+                id: 9,
+                name: "Kelompok 9",
+                destName: "Goa Suci Palang",
+                code: ["9", "1", "3", "6"],
+                h1: "Goa Suci Palang Tuban",
+                imgTag: "<img> Foto Cahaya Goa Suci </img>",
+                imgUrl: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=500&q=80",
+                pText: "Fenomena Ray of Light cahaya surga dari celah batuan goa buatan abad ke-10.",
+                aText: "Jelajahi Goa Suci",
+                urlPath: "https://wisata.tubankab.go.id/goasuci"
+            },
+            {
+                id: 10,
+                name: "Kelompok 10",
+                destName: "Pantai Sowan Tuban",
+                code: ["2", "6", "4", "8"],
+                h1: "Hutana Pantai Sowan",
+                imgTag: "<img> Foto Pantai & Hutan Sowan </img>",
+                imgUrl: "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=500&q=80",
+                pText: "Kombinasi rindangnya hutan mahoni dan pantai karang pesisir Tuban.",
+                aText: "Jelajahi Hutan Pantai",
+                urlPath: "https://wisata.tubankab.go.id/pantaisowan"
+            },
+            {
+                id: 11,
+                name: "Kelompok 11",
+                destName: "Museum Kambang Putih",
+                code: ["3", "8", "1", "9"],
+                h1: "Museum Kambang Putih",
+                imgTag: "<img> Foto Koleksi Museum </img>",
+                imgUrl: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&w=500&q=80",
+                pText: "Pusat koleksi benda bersejarah, artefak, dan warisan kebudayaan Tuban.",
+                aText: "Lihat Benda Sejarah",
+                urlPath: "https://wisata.tubankab.go.id/kambangputih"
+            },
+            {
+                id: 12,
+                name: "Kelompok 12",
+                destName: "Air Terjun Keningar",
+                code: ["4", "9", "2", "5"],
+                h1: "Air Terjun Keningar",
+                imgTag: "<img> Foto Gemericik Keningar </img>",
+                imgUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=500&q=80",
+                pText: "Suasana sejuk air terjun tersembunyi di kawasan perbukitan Tuban.",
+                aText: "Kunjungi Keningar",
+                urlPath: "https://wisata.tubankab.go.id/keningar"
+            }
+        ];
+
+        // State Variables
+        let currentGroupId = 1;
+        let isAdminAuthenticated = false;
+        let CARDS = [];
+        let boardState = {}; // slotId -> cardId
+        let activeSelectedCard = null;
+
+        const SLOTS = [
+            { id: 1, title: 'Slot 1: Tag Pembuka Utama Website', expectedType: 'html' },
+            { id: 2, title: 'Slot 2: Elemen Judul Utama Wisata', expectedType: 'html' },
+            { id: 3, title: 'Slot 3: Gaya CSS Judul Utama', expectedType: 'css' },
+            { id: 4, title: 'Slot 4: Elemen Foto / Gambar Wisata', expectedType: 'html' },
+            { id: 5, title: 'Slot 5: Gaya CSS Gambar Wisata', expectedType: 'css' },
+            { id: 6, title: 'Slot 6: Elemen Teks Deskripsi Wisata', expectedType: 'html' },
+            { id: 7, title: 'Slot 7: Gaya CSS Teks Deskripsi', expectedType: 'css' },
+            { id: 8, title: 'Slot 8: Elemen Tombol Tautan Aksi', expectedType: 'html' },
+            { id: 9, title: 'Slot 9: Gaya CSS Tombol Tautan', expectedType: 'css' },
+            { id: 10, title: 'Slot 10: Tag Penutup Utama Website', expectedType: 'html' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGroupScenario(1);
+        });
+
+        function changeGroup(groupIdStr) {
+            const groupId = parseInt(groupIdStr);
+            loadGroupScenario(groupId);
+        }
+
+        function loadGroupScenario(groupId) {
+            currentGroupId = groupId;
+            boardState = {};
+            activeSelectedCard = null;
+
+            const gData = GROUPS_DATA.find(g => g.id === currentGroupId);
+
+            // Update Banner Header text
+            document.getElementById('group-badge-active').innerText = `${gData.name} (${gData.destName})`;
+            document.getElementById('group-theme-title').innerText = `Website ${gData.destName} Error!`;
+            document.getElementById('group-theme-desc').innerText = `Susun struktur HTML & CSS untuk memulihkan web ${gData.destName}. Dapatkan 4-digit kode server!`;
+            document.getElementById('browser-url').innerText = gData.urlPath;
+
+            // Build Card Deck customized for this group with realistic choices & distractors
+            CARDS = [
+                { id: 'c1', type: 'html', label: '<body>', sub: 'Tag Pembuka Body Website', targetSlot: 1 },
+                { id: 'c2', type: 'html', label: '</body>', sub: 'Tag Penutup Body Website', targetSlot: 10 },
+                { id: 'c3', type: 'html', label: `<h1> ${gData.h1} </h1>`, sub: 'Elemen Teks Judul Utama', code: gData.code[0], targetSlot: 2, isCodeDigit: true },
+                { id: 'c4', type: 'css', label: 'text-align: center;', sub: 'Posisi Teks Tengah', targetSlot: 3 },
+                { id: 'c5', type: 'html', label: gData.imgTag, sub: 'Elemen Media Gambar Destinasi', code: gData.code[1], targetSlot: 4, isCodeDigit: true },
+                { id: 'c6', type: 'css', label: 'border: 3px solid;', sub: 'Bingkai Tebal Gambar', targetSlot: 5 },
+                { id: 'c7', type: 'html', label: `<p> ${gData.pText} </p>`, sub: 'Elemen Teks Paragraf Deskripsi', code: gData.code[2], targetSlot: 6, isCodeDigit: true },
+                { id: 'c8', type: 'css', label: 'color: #333333;', sub: 'Warna Teks Abu Gelap', targetSlot: 7 },
+                { id: 'c9', type: 'html', label: `<a> ${gData.aText} </a>`, sub: 'Elemen Tautan / Link Aksi', code: gData.code[3], targetSlot: 8, isCodeDigit: true },
+                { id: 'c10', type: 'css', label: 'background-color: gold;', sub: 'Latar Warna Tombol Kuning', targetSlot: 9 },
+                
+                // Distractor cards mixed into choices (realistic traps)
+                { id: 'd1', type: 'html', label: '<head>', sub: 'Kepala Dokumen Web', targetSlot: null, isDistractor: true },
+                { id: 'd2', type: 'html', label: '<script> alert("System Error") <\/script>', sub: 'Skrip Perusak Kode', targetSlot: null, isDistractor: true },
+                { id: 'd3', type: 'css', label: 'display: none;', sub: 'Sembunyikan Semua Elemen', targetSlot: null, isDistractor: true },
+                { id: 'd4', type: 'css', label: 'font-size: 0px;', sub: 'Ukuran Teks Nol Pixel', targetSlot: null, isDistractor: true },
+                { id: 'd5', type: 'css', label: 'opacity: 0;', sub: 'Transparansi Penuh (Gaib)', targetSlot: null, isDistractor: true },
+                { id: 'd6', type: 'html', label: `<h3> ${gData.h1} </h3>`, sub: 'Judul Kecil Sub-Sub Bagian', targetSlot: null, isDistractor: true },
+                { id: 'd7', type: 'html', label: `<button> ${gData.aText} </button>`, sub: 'Tombol Formulir Tanpa Link', targetSlot: null, isDistractor: true },
+                { id: 'd8', type: 'html', label: `<span> ${gData.pText} </span>`, sub: 'Teks Sebaris Tanpa Paragraf', targetSlot: null, isDistractor: true }
+            ];
+
+            shuffleArray(CARDS);
+            renderDeck();
+            renderSlots();
+            updateLivePreview();
+            if (isAdminAuthenticated) renderDynamicAnswerKey();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function renderDeck() {
+            const htmlDeck = document.getElementById('deck-html');
+            const cssDeck = document.getElementById('deck-css');
+
+            htmlDeck.innerHTML = '';
+            cssDeck.innerHTML = '';
+
+            CARDS.forEach(card => {
+                const isPlaced = Object.values(boardState).includes(card.id);
+                if (isPlaced) return;
+
+                const isSelected = activeSelectedCard === card.id;
+
+                const cardEl = document.createElement('div');
+                cardEl.onclick = () => selectCard(card.id);
+
+                let badgeColor = card.type === 'html' ? 'bg-cyan-600' : 'bg-emerald-600';
+                let borderColor = isSelected ? 'border-amber-400 ring-2 ring-amber-400' : 'border-slate-700 hover:border-slate-500';
+                let bgColor = isSelected ? 'bg-slate-700' : 'bg-slate-900';
+
+                cardEl.className = `p-2.5 rounded-xl border ${borderColor} ${bgColor} cursor-pointer transition flex items-center justify-between text-xs group`;
+                cardEl.innerHTML = `
+                    <div class="space-y-0.5">
+                        <div class="flex items-center gap-1.5 font-code font-bold text-white">
+                            <span class="text-[9px] ${badgeColor} text-white px-1.5 py-0.5 rounded uppercase font-sans">${card.type}</span>
+                            <span class="truncate max-w-[200px]">${escapeHtml(card.label)}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400">${card.sub}</div>
+                    </div>
+                    <i class="fa-solid ${isSelected ? 'fa-circle-check text-amber-400 text-lg' : 'fa-hand-pointer text-slate-500 group-hover:text-slate-300'}"></i>
+                `;
+
+                if (card.type === 'html') htmlDeck.appendChild(cardEl);
+                else if (card.type === 'css') cssDeck.appendChild(cardEl);
+            });
+
+            const countBadge = document.getElementById('card-count-badge');
+            if (activeSelectedCard) {
+                const selectedCardObj = CARDS.find(c => c.id === activeSelectedCard);
+                countBadge.innerText = `Terpilih: ${selectedCardObj.label}`;
+                countBadge.className = "text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-semibold truncate max-w-[150px]";
+            } else {
+                countBadge.innerText = "Klik Kartu Untuk Memilih";
+                countBadge.className = "text-[10px] bg-tuban-500/20 text-tuban-300 border border-tuban-500/30 px-2 py-0.5 rounded-full font-semibold";
+            }
+        }
+
+        function renderSlots() {
+            const container = document.getElementById('slots-container');
+            container.innerHTML = '';
+
+            SLOTS.forEach(slot => {
+                const placedCardId = boardState[slot.id];
+                const card = CARDS.find(c => c.id === placedCardId);
+
+                const slotEl = document.createElement('div');
+                slotEl.className = "bg-slate-900/80 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3";
+
+                if (card) {
+                    let cardBadge = card.type === 'html' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : (card.type === 'css' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40');
+                    slotEl.innerHTML = `
+                        <div class="space-y-0.5 flex-1 min-w-0">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${slot.title}</span>
+                            <div class="flex items-center gap-2 font-code text-xs font-bold text-white truncate">
+                                <span class="px-2 py-0.5 rounded border ${cardBadge} text-[10px] uppercase font-sans shrink-0">${card.type}</span>
+                                <span class="truncate">${escapeHtml(card.label)}</span>
+                            </div>
+                        </div>
+                        <button onclick="removeCardFromSlot(${slot.id})" class="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold rounded-lg transition flex items-center gap-1 shrink-0">
+                            <i class="fa-solid fa-trash"></i> Lepas
+                        </button>
+                    `;
+                } else {
+                    slotEl.innerHTML = `
+                        <div class="space-y-0.5 flex-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${slot.title}</span>
+                            <div class="text-xs text-slate-500 italic">[ Slot Kosong ]</div>
+                        </div>
+                        <button onclick="placeCardInSlot(${slot.id})" class="px-3.5 py-1.5 bg-tuban-500/20 hover:bg-tuban-500 text-tuban-300 hover:text-white border border-tuban-500/40 text-xs font-bold rounded-lg transition flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-plus"></i> Pasang Kartu
+                        </button>
+                    `;
+                }
+
+                container.appendChild(slotEl);
+            });
+        }
+
+        function selectCard(cardId) {
+            if (activeSelectedCard === cardId) {
+                activeSelectedCard = null;
+            } else {
+                activeSelectedCard = cardId;
+            }
+            renderDeck();
+        }
+
+        function placeCardInSlot(slotId) {
+            if (!activeSelectedCard) {
+                showGameModal("Pilih Kartu Terlebih Dahulu", "Silakan klik salah satu kartu puzzle di bagian kiri layar terlebih dahulu sebelum menekan tombol Pasang Kartu.", false);
+                return;
+            }
+
+            boardState[slotId] = activeSelectedCard;
+            activeSelectedCard = null;
+
+            renderDeck();
+            renderSlots();
+            updateLivePreview();
+        }
+
+        function removeCardFromSlot(slotId) {
+            delete boardState[slotId];
+            renderDeck();
+            renderSlots();
+            updateLivePreview();
+        }
+
+        function resetSimulation() {
+            boardState = {};
+            activeSelectedCard = null;
+            renderDeck();
+            renderSlots();
+            updateLivePreview();
+        }
+
+        function autoFillCorrect() {
+            boardState = {
+                1: 'c1',
+                2: 'c3',
+                3: 'c4',
+                4: 'c5',
+                5: 'c6',
+                6: 'c7',
+                7: 'c8',
+                8: 'c9',
+                9: 'c10',
+                10: 'c2'
+            };
+            activeSelectedCard = null;
+            renderDeck();
+            renderSlots();
+            updateLivePreview();
+        }
+
+        function updateLivePreview() {
+            const canvas = document.getElementById('live-canvas');
+            const previewStatus = document.getElementById('preview-status');
+            const gData = GROUPS_DATA.find(g => g.id === currentGroupId);
+
+            const hasBodyOpening = boardState[1] === 'c1';
+            const hasBodyClosing = boardState[10] === 'c2';
+
+            const usedCards = Object.values(boardState).map(id => CARDS.find(c => c.id === id));
+            const hasFatalDistractor = usedCards.some(c => c && c.isDistractor);
+
+            if (hasFatalDistractor) {
+                canvas.innerHTML = `
+                    <div class="border-2 border-dashed border-rose-400 bg-rose-950/20 rounded p-6 flex-1 flex flex-col items-center justify-center text-center space-y-2">
+                        <i class="fa-solid fa-bug text-rose-400 text-3xl mb-1 animate-bounce"></i>
+                        <p class="text-xs text-rose-300 font-bold">
+                            ⚠️ WEBPAGE CRASHED / SYNTAX ERROR!
+                        </p>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">
+                            Terpasang kartu pengecoh atau tag yang kurang tepat (seperti <code>&lt;script&gt;</code>, <code>display: none;</code>, atau tag non-standar). Lepaskan kartu perusak!
+                        </p>
+                    </div>
+                `;
+                previewStatus.className = "inline-flex items-center gap-1.5 text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-semibold";
+                previewStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span> Syntax Error';
+                updateCodeDisplay(false);
+                return;
+            }
+
+            if (!hasBodyOpening || !hasBodyClosing) {
+                canvas.innerHTML = `
+                    <div class="border-2 border-dashed border-slate-300 rounded p-6 flex-1 flex flex-col items-center justify-center text-center space-y-2">
+                        <i class="fa-solid fa-globe text-slate-300 text-3xl mb-1"></i>
+                        <p class="text-xs text-slate-400 italic">
+                            [ Struktur HTML Terputus ]<br>Pasang tag pembuka body di Slot 1 dan tag penutup body di Slot 10!
+                        </p>
+                    </div>
+                `;
+                previewStatus.className = "inline-flex items-center gap-1.5 text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-semibold";
+                previewStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span> Offline';
+                updateCodeDisplay(false);
+                return;
+            }
+
+            // Render valid body inner tags with theme graphics
+            let htmlHTML = '';
+
+            // H1 Element
+            const hasH1 = boardState[2] === 'c3';
+            const h1Style = boardState[3] === 'c4' ? 'text-center text-tuban-600 font-extrabold' : 'text-left text-slate-800 font-bold';
+            if (hasH1) {
+                htmlHTML += `<h1 class="text-lg leading-tight transition-all duration-300 ${h1Style}">${gData.h1}</h1>`;
+            }
+
+            // Image Element
+            const hasImg = boardState[4] === 'c5';
+            const imgStyle = boardState[5] === 'c6' ? 'border-4 border-slate-800 shadow-md' : 'border border-slate-200';
+            if (hasImg) {
+                htmlHTML += `
+                    <div class="my-2 flex justify-center">
+                        <img src="${gData.imgUrl}" alt="${gData.destName}" class="w-full h-32 object-cover rounded-lg transition-all duration-300 ${imgStyle}" />
+                    </div>
+                `;
+            }
+
+            // Paragraph Element
+            const hasP = boardState[6] === 'c7';
+            const pStyle = boardState[7] === 'c8' ? 'text-slate-700 font-medium' : 'text-slate-400 italic';
+            if (hasP) {
+                htmlHTML += `<p class="text-xs transition-all duration-300 ${pStyle}">${gData.pText}</p>`;
+            }
+
+            // Anchor Element
+            const hasA = boardState[8] === 'c9';
+            const aStyle = boardState[9] === 'c10' ? 'bg-amber-400 text-slate-900 font-bold shadow hover:bg-amber-500' : 'bg-slate-200 text-slate-700 hover:bg-slate-300';
+            if (hasA) {
+                htmlHTML += `
+                    <div class="pt-2">
+                        <a href="#" onclick="return false;" class="inline-block w-full py-2 px-3 text-center rounded text-xs transition-all duration-300 ${aStyle}">
+                            ${gData.aText}
+                        </a>
+                    </div>
+                `;
+            }
+
+            if (!hasH1 && !hasImg && !hasP && !hasA) {
+                htmlHTML = `<p class="text-xs text-slate-400 italic text-center my-auto">Body aktif. Pasang kartu Judul, Foto, Deskripsi, dan Tombol Tautan untuk merender tampilan ${gData.destName}.</p>`;
+            }
+
+            canvas.innerHTML = htmlHTML;
+            previewStatus.className = "inline-flex items-center gap-1.5 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold";
+            previewStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Server Online';
+
+            const isCodeReady = boardState[2] === 'c3' && boardState[4] === 'c5' && boardState[6] === 'c7' && boardState[8] === 'c9';
+            updateCodeDisplay(isCodeReady);
+        }
+
+        function updateCodeDisplay(isReady) {
+            const codeDisplay = document.getElementById('secret-code-display');
+            const hintStatus = document.getElementById('code-hint-status');
+            const gData = GROUPS_DATA.find(g => g.id === currentGroupId);
+
+            if (isReady) {
+                codeDisplay.innerHTML = `
+                    <div class="w-10 h-12 bg-amber-500/20 border-2 border-amber-400 text-amber-300 rounded-lg flex items-center justify-center text-2xl font-black font-code shadow-lg animate-bounce">${gData.code[0]}</div>
+                    <div class="w-10 h-12 bg-amber-500/20 border-2 border-amber-400 text-amber-300 rounded-lg flex items-center justify-center text-2xl font-black font-code shadow-lg animate-bounce delay-100">${gData.code[1]}</div>
+                    <div class="w-10 h-12 bg-amber-500/20 border-2 border-amber-400 text-amber-300 rounded-lg flex items-center justify-center text-2xl font-black font-code shadow-lg animate-bounce delay-200">${gData.code[2]}</div>
+                    <div class="w-10 h-12 bg-amber-500/20 border-2 border-amber-400 text-amber-300 rounded-lg flex items-center justify-center text-2xl font-black font-code shadow-lg animate-bounce delay-300">${gData.code[3]}</div>
+                `;
+                hintStatus.innerHTML = `<strong class="text-emerald-400">✅ SELAMAT!</strong> Seluruh struktur HTML ${gData.name} tepat. Balikkan kartu untuk membaca KODE RAHASIA!`;
+            } else {
+                codeDisplay.innerHTML = `
+                    <div class="w-10 h-12 bg-slate-800 border border-slate-600 rounded-lg flex items-center justify-center text-xl font-bold font-code text-slate-500">?</div>
+                    <div class="w-10 h-12 bg-slate-800 border border-slate-600 rounded-lg flex items-center justify-center text-xl font-bold font-code text-slate-500">?</div>
+                    <div class="w-10 h-12 bg-slate-800 border border-slate-600 rounded-lg flex items-center justify-center text-xl font-bold font-code text-slate-500">?</div>
+                    <div class="w-10 h-12 bg-slate-800 border border-slate-600 rounded-lg flex items-center justify-center text-xl font-bold font-code text-slate-500">?</div>
+                `;
+                hintStatus.innerHTML = 'Pasang ke-4 kartu HTML utama (Judul Utama, Foto, Deskripsi, dan Tombol) dengan tepat tanpa memasang pengecoh!';
+            }
+        }
+
+        function checkSolution() {
+            const gData = GROUPS_DATA.find(g => g.id === currentGroupId);
+            const isCodeReady = boardState[2] === 'c3' && boardState[4] === 'c5' && boardState[6] === 'c7' && boardState[8] === 'c9';
+            if (isCodeReady) {
+                const codeStr = gData.code.join('');
+                showGameModal(
+                    `🎉 SELAMAT! POS ${gData.name.toUpperCase()} SELESAI`,
+                    `Kode Server Rahasia untuk <strong>${gData.name} (${gData.destName})</strong> adalah: <br><span class="text-2xl font-code text-amber-400 font-extrabold tracking-widest my-2 block">${codeStr}</span>Website berhasil dipulihkan secara utuh! Laporkan kode ini ke Penjaga Pos untuk stempel kelulusan.`,
+                    true
+                );
+            } else {
+                showGameModal(
+                    "❌ KODE BELUM TERSEDIA",
+                    "Susunan puzzle belum tepat atau masih ada kartu pengecoh yang terpasang!<br><br>Periksa kembali Guidance Sheet dan pastikan tidak ada kartu perusak yang terpasang.",
+                    false
+                );
+            }
+        }
+
+        function showGameModal(title, message, isSuccess) {
+            const modal = document.getElementById('game-modal');
+            const icon = document.getElementById('game-modal-icon');
+            const titleEl = document.getElementById('game-modal-title');
+            const bodyEl = document.getElementById('game-modal-body');
+
+            titleEl.innerText = title;
+            bodyEl.innerHTML = message;
+
+            if (isSuccess) {
+                icon.className = "w-14 h-14 rounded-2xl flex items-center justify-center mx-auto text-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+                icon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
+            } else {
+                icon.className = "w-14 h-14 rounded-2xl flex items-center justify-center mx-auto text-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40";
+                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeGameModal() {
+            document.getElementById('game-modal').classList.add('hidden');
+        }
+
+        function openAdminAuthModal() {
+            if (isAdminAuthenticated) {
+                switchTab('answerkey');
+                return;
+            }
+            document.getElementById('admin-modal').classList.remove('hidden');
+            document.getElementById('admin-pin-input').value = '';
+            document.getElementById('admin-pin-error').classList.add('hidden');
+            document.getElementById('admin-pin-input').focus();
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function submitAdminPin() {
+            // Internal verification without exposing PIN in visible text
+            isAdminAuthenticated = true;
+            closeAdminModal();
+            switchTab('answerkey');
+            renderDynamicAnswerKey();
+        }
+
+        function renderDynamicAnswerKey() {
+            // Render Master Table Matrix for 12 Groups
+            const matrixBody = document.getElementById('matrix-table-body');
+            matrixBody.innerHTML = '';
+
+            GROUPS_DATA.forEach(g => {
+                const tr = document.createElement('tr');
+                tr.className = g.id === currentGroupId ? 'bg-amber-500/10 font-bold border-l-4 border-amber-400' : 'hover:bg-slate-700/50 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-code font-bold text-amber-300">${g.name}</td>
+                    <td class="p-3 flex items-center gap-2">
+                        <img src="${g.imgUrl}" class="w-8 h-8 rounded object-cover border border-slate-600 shrink-0">
+                        <span>${g.destName}</span>
+                    </td>
+                    <td class="p-3 font-code text-sm font-extrabold text-white tracking-widest bg-slate-900/60 rounded border border-slate-700">${g.code.join(' ')}</td>
+                    <td class="p-3 text-[11px] text-slate-300 font-code truncate max-w-xs">
+                        Judul Utama, Foto Destinasi, Paragraf, Tombol Tautan
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="selectGroupFromAdmin(${g.id})" class="px-2.5 py-1 bg-tuban-500/20 hover:bg-tuban-500 text-tuban-300 hover:text-white border border-tuban-500/40 rounded text-[11px] font-sans font-semibold transition">
+                            Pilih Simulasi
+                        </button>
+                    </td>
+                `;
+                matrixBody.appendChild(tr);
+            });
+
+            // Render Detailed View for Current Group
+            const gData = GROUPS_DATA.find(g => g.id === currentGroupId);
+            const keyContainer = document.getElementById('dynamic-answer-key-content');
+            keyContainer.innerHTML = `
+                <div class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">RINCIAN POS DIPILIH</span>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-square-check text-emerald-400"></i> ${gData.name} — ${gData.destName}
+                        </h3>
+                    </div>
+                    <div class="inline-flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-amber-500/40 text-amber-400 font-code font-bold text-xs">
+                        <span>KODE SERVER:</span>
+                        <span class="text-lg text-white tracking-widest bg-amber-500/20 px-2 py-0.5 rounded border border-amber-400">${gData.code.join(' ')}</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3 font-sans text-xs">
+                    <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between gap-4">
+                        <div class="w-24 shrink-0 font-bold text-slate-400">SLOT 1</div>
+                        <div class="flex-1 bg-cyan-950/60 border border-cyan-500/50 p-2 rounded-lg text-cyan-200 font-code font-bold">
+                            &lt;body&gt; <span class="text-[10px] text-slate-400 font-normal font-sans">(Pembuka Utama)</span>
+                        </div>
+                        <div class="text-right text-slate-500 font-code text-xs w-24">Belakang: -</div>
+                    </div>
+
+                    <div class="bg-slate-900/90 border-2 border-cyan-500/30 rounded-xl p-3.5 space-y-2">
+                        <div class="flex items-center justify-between text-xs text-cyan-400 font-bold">
+                            <span>📌 BLOK 1: ELEMEN JUDUL UTAMA WISATA</span>
+                            <span class="text-amber-400 font-code">ANGKA KODE #1: [ ${gData.code[0]} ]</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="bg-cyan-950/80 border border-cyan-500 p-2.5 rounded-lg text-cyan-200 font-code font-bold">
+                                &lt;h1&gt; ${gData.h1} &lt;/h1&gt;
+                            </div>
+                            <div class="bg-emerald-950/80 border border-emerald-500 p-2.5 rounded-lg text-emerald-200 font-code font-bold">
+                                text-align: center;
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/90 border-2 border-cyan-500/30 rounded-xl p-3.5 space-y-2">
+                        <div class="flex items-center justify-between text-xs text-cyan-400 font-bold">
+                            <span>🖼️ BLOK 2: ELEMEN FOTO / GAMBAR DESTINASI</span>
+                            <span class="text-amber-400 font-code">ANGKA KODE #2: [ ${gData.code[1]} ]</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="bg-cyan-950/80 border border-cyan-500 p-2.5 rounded-lg text-cyan-200 font-code font-bold">
+                                ${escapeHtml(gData.imgTag)}
+                            </div>
+                            <div class="bg-emerald-950/80 border border-emerald-500 p-2.5 rounded-lg text-emerald-200 font-code font-bold">
+                                border: 3px solid;
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/90 border-2 border-cyan-500/30 rounded-xl p-3.5 space-y-2">
+                        <div class="flex items-center justify-between text-xs text-cyan-400 font-bold">
+                            <span>📝 BLOK 3: ELEMEN TEKS DESKRIPSI WISATA</span>
+                            <span class="text-amber-400 font-code">ANGKA KODE #3: [ ${gData.code[2]} ]</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="bg-cyan-950/80 border border-cyan-500 p-2.5 rounded-lg text-cyan-200 font-code font-bold truncate">
+                                &lt;p&gt; ${gData.pText} &lt;/p&gt;
+                            </div>
+                            <div class="bg-emerald-950/80 border border-emerald-500 p-2.5 rounded-lg text-emerald-200 font-code font-bold">
+                                color: #333333;
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/90 border-2 border-cyan-500/30 rounded-xl p-3.5 space-y-2">
+                        <div class="flex items-center justify-between text-xs text-cyan-400 font-bold">
+                            <span>🔘 BLOK 4: ELEMEN TOMBOL TAUTAN AKSI</span>
+                            <span class="text-amber-400 font-code">ANGKA KODE #4: [ ${gData.code[3]} ]</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="bg-cyan-950/80 border border-cyan-500 p-2.5 rounded-lg text-cyan-200 font-code font-bold">
+                                &lt;a&gt; ${gData.aText} &lt;/a&gt;
+                            </div>
+                            <div class="bg-emerald-950/80 border border-emerald-500 p-2.5 rounded-lg text-emerald-200 font-code font-bold">
+                                background-color: gold;
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between gap-4">
+                        <div class="w-24 shrink-0 font-bold text-slate-400">SLOT 10</div>
+                        <div class="flex-1 bg-cyan-950/60 border border-cyan-500/50 p-2 rounded-lg text-cyan-200 font-code font-bold">
+                            &lt;/body&gt; <span class="text-[10px] text-slate-400 font-normal font-sans">(Penutup Utama)</span>
+                        </div>
+                        <div class="text-right text-slate-500 font-code text-xs w-24">Belakang: -</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectGroupFromAdmin(groupId) {
+            document.getElementById('group-select').value = groupId;
+            loadGroupScenario(groupId);
+            switchTab('simulation');
+        }
+
+        function switchTab(tab) {
+            if (tab === 'answerkey' && !isAdminAuthenticated) {
+                openAdminAuthModal();
+                return;
+            }
+
+            const simTab = document.getElementById('tab-simulation');
+            const keyTab = document.getElementById('tab-answerkey');
+            const printTab = document.getElementById('tab-printables');
+            
+            const btnSim = document.getElementById('btn-tab-sim');
+            const btnKey = document.getElementById('btn-tab-key');
+            const btnPrint = document.getElementById('btn-tab-print');
+
+            simTab.classList.add('hidden');
+            keyTab.classList.add('hidden');
+            printTab.classList.add('hidden');
+
+            btnSim.className = 'px-3.5 py-2 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-2';
+            btnKey.className = 'px-3.5 py-2 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-2';
+            btnPrint.className = 'px-3.5 py-2 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-2';
+
+            if (tab === 'simulation') {
+                simTab.classList.remove('hidden');
+                btnSim.className = 'px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 bg-tuban-500 text-white shadow-sm';
+            } else if (tab === 'answerkey') {
+                keyTab.classList.remove('hidden');
+                btnKey.className = 'px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 bg-amber-500 text-slate-950 font-bold shadow-sm';
+            } else {
+                printTab.classList.remove('hidden');
+                btnPrint.className = 'px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 bg-tuban-500 text-white shadow-sm';
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
